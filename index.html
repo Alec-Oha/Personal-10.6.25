@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alec Ohanesian</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow-x: hidden;
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .landing {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+            pointer-events: auto;
+        }
+        
+        .click-hint {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            color: white;
+            opacity: 0.6;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .click-hint.hidden {
+            opacity: 0;
+        }
+        
+        .click-hint-2 {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            color: white;
+            opacity: 0.6;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            opacity: 0;
+        }
+        
+        .click-hint-2.visible {
+            opacity: 0.6;
+        }
+        
+        .click-icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid white;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .click-icon::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .quadrant-labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        
+        .quadrant-labels.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .quadrant-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Pirata One', cursive;
+            position: relative;
+        }
+        
+        .quadrant-label::after {
+            content: '';
+            position: absolute;
+            bottom: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: #ffd700;
+            transition: width 0.3s;
+        }
+        
+        .quadrant-label:hover::after {
+            width: 60%;
+        }
+        
+        .quadrant-label:hover {
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 2.8rem;
+        }
+        
+        .content-section {
+            position: relative;
+            min-height: 100vh;
+            padding: 80px 10%;
+            z-index: 2;
+            background: rgba(10, 10, 10, 0.95);
+        }
+        
+        .content-section h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #404040;
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .project-card {
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #404040;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+            border-color: #666;
+        }
+        
+        .project-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+        
+        .project-card p {
+            color: #aaa;
+            line-height: 1.6;
+        }
+        
+        .project-placeholder {
+            width: 100%;
+            height: 200px;
+            background: #0a0a0a;
+            border: 1px dashed #404040;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .writing-list {
+            max-width: 800px;
+        }
+        
+        .writing-category {
+            margin-bottom: 4rem;
+        }
+        
+        .category-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #ccc;
+            border-left: 4px solid #666;
+            padding-left: 1rem;
+        }
+        
+        .writing-item {
+            padding: 2rem 0;
+            border-bottom: 1px solid #404040;
+        }
+        
+        .writing-item:last-child {
+            border-bottom: none;
+        }
+        
+        .writing-item h4 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .writing-item h4 a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .writing-item h4 a:hover {
+            color: #aaa;
+        }
+        
+        .writing-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .writing-item p {
+            color: #aaa;
+            line-height: 1.8;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .gallery-folder {
+            background: #1a1a1a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #404040;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .gallery-folder:hover {
+            border-color: #666;
+            transform: translateY(-3px);
+        }
+        
+        .folder-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .gallery-folder h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .gallery-folder p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .experience-container {
+            max-width: 900px;
+        }
+        
+        .experience-section {
+            margin-bottom: 3rem;
+        }
+        
+        .experience-section h3 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            border-left: 4px solid #666;
+            padding-left: 1rem;
+        }
+        
+        .timeline-item {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: #1a1a1a;
+            border-left: 3px solid #404040;
+            padding-left: 2rem;
+        }
+        
+        .timeline-item h4 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .timeline-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .timeline-item ul {
+            margin-left: 1.5rem;
+            color: #aaa;
+            line-height: 1.8;
+        }
+        
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .interest-tag {
+            background: #1a1a1a;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #404040;
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1a1a1a;
+            color: white;
+            padding: 1rem 1.5rem;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .back-to-top:hover {
+            background: #2a2a2a;
+            border-color: #666;
+        }
+        
+        .reset-button {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #1a1a1a;
+            padding: 0.6rem 1rem;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            font-size: 0.85rem;
+            color: white;
+        }
+        
+        .reset-button.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .reset-button:hover {
+            background: #2a2a2a;
+            border-color: #666;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #ffd700;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .menu-button {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 101;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .menu-button:hover {
+            background: #2a2a2a;
+            border-color: #666;
+        }
+        
+        .menu-line {
+            width: 24px;
+            height: 2px;
+            background: #ffd700;
+            transition: all 0.3s;
+        }
+        
+        .menu-button.active .menu-line:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        
+        .menu-button.active .menu-line:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-button.active .menu-line:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+        
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -250px;
+            width: 250px;
+            height: 100vh;
+            background: rgba(26, 26, 26, 0.95);
+            border-left: 1px solid #404040;
+            z-index: 100;
+            transition: right 0.3s;
+            padding: 100px 2rem 2rem;
+        }
+        
+        .side-menu.open {
+            right: 0;
+        }
+        
+        .menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .menu-link {
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .menu-link:hover {
+            color: #ffed4e;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <button class="reset-button" id="resetButton">
+        <div class="status-dot"></div>
+        <span>Reset</span>
+    </button>
+    
+    <button class="menu-button" id="menuButton">
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+        <div class="menu-line"></div>
+    </button>
+    
+    <nav class="side-menu" id="sideMenu">
+        <div class="menu-links">
+            <a href="#projects" class="menu-link">PROJECTS</a>
+            <a href="#writing" class="menu-link">WRITING</a>
+            <a href="#gallery" class="menu-link">GALLERY</a>
+            <a href="#experience" class="menu-link">EXPERIENCE</a>
+            <a href="#contact" class="menu-link">CONTACT</a>
+        </div>
+    </nav>
+    
+    <div class="landing" id="landing">
+        <div class="click-hint" id="clickHint">
+            <div class="click-icon"></div>
+            <span>Click</span>
+        </div>
+        
+        <div class="click-hint-2" id="clickHint2">
+            <div class="click-icon"></div>
+            <span>Click</span>
+        </div>
+        
+        <div class="quadrant-labels" id="quadrantLabels">
+            <div class="quadrant-label" data-section="projects">PROJECTS</div>
+            <div class="quadrant-label" data-section="writing">WRITING</div>
+            <div class="quadrant-label" data-section="gallery">GALLERY</div>
+            <div class="quadrant-label" data-section="experience">EXPERIENCE</div>
+        </div>
+    </div>
+    
+    <section class="content-section" id="projects">
+        <h2>Projects</h2>
+        <div class="projects-grid">
+            <div class="project-card">
+                <div class="project-placeholder">Project Image</div>
+                <h3>Project Title</h3>
+                <p>Project description will go here. This is a placeholder for future projects.</p>
+            </div>
+            <div class="project-card">
+                <div class="project-placeholder">Project Image</div>
+                <h3>Project Title</h3>
+                <p>Project description will go here. This is a placeholder for future projects.</p>
+            </div>
+            <div class="project-card">
+                <div class="project-placeholder">Project Image</div>
+                <h3>Project Title</h3>
+                <p>Project description will go here. This is a placeholder for future projects.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="content-section" id="writing">
+        <h2>Writing</h2>
+        
+        <div class="writing-category">
+            <div class="writing-list">
+                <article class="writing-item">
+                    <h4><a href="writing/sample-essay.html">Sample Essay Title</a></h4>
+                    <div class="writing-meta">Published on Month Day, Year • 5 min read</div>
+                    <p>This is an excerpt from an essay. Click the title to read the full piece on a separate page.</p>
+                </article>
+                <article class="writing-item">
+                    <h4><a href="writing/another-essay.html">Another Essay Title</a></h4>
+                    <div class="writing-meta">Published on Month Day, Year • 7 min read</div>
+                    <p>Another essay excerpt goes here. This will link to the full article.</p>
+                </article>
+            </div>
+        </div>
+        
+        <div class="writing-category">
+            <h3 class="category-title">Book Reviews</h3>
+            <div class="writing-list">
+                <article class="writing-item">
+                    <h4><a href="writing/chronicles-of-amber-review.html">The Chronicles of Amber by Roger Zelazny</a></h4>
+                    <div class="writing-meta">6.9/10 • Fantasy</div>
+                    <p>A fantasy series spanning two opposing "true" worlds called Amber and Chaos, with thousands of shadow worlds in between. Strong first five books, weaker latter half.</p>
+                </article>
+                <article class="writing-item">
+                    <h4><a href="writing/scanner-darkly-review.html">A Scanner Darkly by Philip K. Dick</a></h4>
+                    <div class="writing-meta">6.35/10 • Science Fiction</div>
+                    <p>A psychedelic thriller following an undercover cop who becomes addicted to the drug he's investigating. Set in Orange County with a satisfying, navigable story.</p>
+                </article>
+                <article class="writing-item">
+                    <h4><a href="writing/space-trilogy-review.html">The Space Trilogy by C.S. Lewis</a></h4>
+                    <div class="writing-meta">2.6/10 • Science Fiction</div>
+                    <p>Didn't finish this one. Felt more like a Christian allegory than the alien battles and spaceships I was expecting. Writing style didn't connect with me.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+    
+    <section class="content-section" id="gallery">
+        <h2>Gallery</h2>
+        <div class="gallery-grid">
+            <div class="gallery-folder">
+                <div class="folder-icon">📁</div>
+                <h3>Travel</h3>
+                <p>24 photos</p>
+            </div>
+            <div class="gallery-folder">
+                <div class="folder-icon">📁</div>
+                <h3>Projects</h3>
+                <p>15 photos</p>
+            </div>
+            <div class="gallery-folder">
+                <div class="folder-icon">📁</div>
+                <h3>Events</h3>
+                <p>32 photos</p>
+            </div>
+            <div class="gallery-folder">
+                <div class="folder-icon">📁</div>
+                <h3>Misc</h3>
+                <p>18 photos</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="content-section" id="experience">
+        <h2>Experience</h2>
+        <div class="experience-container">
+            <div class="experience-section">
+                <h3>Work Experience</h3>
+                <div class="timeline-item">
+                    <h4>Production Leader – Turbines</h4>
+                    <div class="timeline-meta">Rolls Royce | June 2025 – Present</div>
+                    <ul>
+                        <li>Responsible for $10M in annual production output</li>
+                        <li>Led daily troubleshooting of machining/assembly issues</li>
+                        <li>Spearheaded automation of division-wide labor dashboard</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>Manufacturing Engineer</h4>
+                    <div class="timeline-meta">Rolls Royce | August 2024 – July 2025</div>
+                    <ul>
+                        <li>Authored and executed Process Verification Audit (PVA)</li>
+                        <li>Responsible for CAD, CAM, simulation, and implementation</li>
+                        <li>Authored process documentation for ISO9001 compliance</li>
+                    </ul>
+                </div>
+                <div class="timeline-item">
+                    <h4>Manufacturing Engineering Intern</h4>
+                    <div class="timeline-meta">Edwards Lifesciences | June 2022 – September 2022</div>
+                    <ul>
+                        <li>Designed and prototyped pilot line fixtures</li>
+                        <li>Supported implementation of hydrophilic coating process</li>
+                        <li>Conducted component cost analysis resulting in 6% reduction</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="experience-section">
+                <h3>Education</h3>
+                <div class="timeline-item">
+                    <h4>B.S. Manufacturing Engineering</h4>
+                    <div class="timeline-meta">California Polytechnic State University, San Luis Obispo | 2020 – 2024</div>
+                </div>
+            </div>
+            
+            <div class="experience-section">
+                <h3>Interests</h3>
+                <div class="interests-grid">
+                    <div class="interest-tag">CNC Machining</div>
+                    <div class="interest-tag">3D Printing</div>
+                    <div class="interest-tag">Process Optimization</div>
+                    <div class="interest-tag">Automation</div>
+                    <div class="interest-tag">CAD/CAM</div>
+                    <div class="interest-tag">Lean Manufacturing</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <button class="back-to-top" id="backToTop">↑ Back to Top</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        
+        camera.position.z = 50;
+
+        // Particle system
+        const particleCount = 12000;
+        const particles = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = [];
+        const initialPositions = new Float32Array(particleCount * 3);
+
+        // Initialize particles in text shape "ALEC OHANESIAN"
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 200;
+        
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 70px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ALEC OHANESIAN', canvas.width / 2, canvas.height / 2);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const textPixels = [];
+        
+        for (let y = 0; y < canvas.height; y += 1) {
+            for (let x = 0; x < canvas.width; x += 1) {
+                const index = (y * canvas.width + x) * 4;
+                if (imageData.data[index] > 128) {
+                    textPixels.push({ x, y });
+                }
+            }
+        }
+        
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            
+            if (textPixels.length > 0) {
+                const pixel = textPixels[Math.floor(Math.random() * textPixels.length)];
+                positions[i3] = (pixel.x - canvas.width / 2) * 0.08;
+                positions[i3 + 1] = -(pixel.y - canvas.height / 2) * 0.08;
+                positions[i3 + 2] = (Math.random() - 0.5) * 1;
+            } else {
+                positions[i3] = 0;
+                positions[i3 + 1] = 0;
+                positions[i3 + 2] = 0;
+            }
+            
+            initialPositions[i3] = positions[i3];
+            initialPositions[i3 + 1] = positions[i3 + 1];
+            initialPositions[i3 + 2] = positions[i3 + 2];
+            
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.02,
+                y: (Math.random() - 0.5) * 0.02,
+                z: (Math.random() - 0.5) * 0.02
+            });
+        }
+
+        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.4,
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particleSystem = new THREE.Points(particles, particleMaterial);
+        scene.add(particleSystem);
+
+        // State management
+        const mouse = { x: 0, y: 0 };
+        const target = { x: 0, y: 0 };
+        let clickState = 0;
+        let navigationEnabled = false;
+
+        document.addEventListener('mousemove', (e) => {
+            if (!navigationEnabled) {
+                target.x = (e.clientX / window.innerWidth) * 2 - 1;
+                target.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            }
+        });
+
+        document.getElementById('landing').addEventListener('click', (e) => {
+            if (!e.target.classList.contains('quadrant-label')) {
+                clickState = (clickState + 1) % 3;
+                const hint = document.getElementById('clickHint');
+                const hint2 = document.getElementById('clickHint2');
+                const labels = document.getElementById('quadrantLabels');
+                
+                if (clickState === 0) {
+                    hint.classList.remove('hidden');
+                    hint2.classList.remove('visible');
+                    labels.classList.remove('visible');
+                    resetButton.classList.remove('visible');
+                } else if (clickState === 1) {
+                    hint.classList.add('hidden');
+                    hint2.classList.add('visible');
+                    resetButton.classList.remove('visible');
+                } else if (clickState === 2) {
+                    hint2.classList.remove('visible');
+                    labels.classList.add('visible');
+                    resetButton.classList.add('visible');
+                }
+            }
+        });
+
+        // Quadrant navigation
+        document.querySelectorAll('.quadrant-label').forEach(label => {
+            label.addEventListener('click', (e) => {
+                const section = e.target.dataset.section;
+                navigationEnabled = true;
+                document.getElementById(section).scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        const resetButton = document.getElementById('resetButton');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > window.innerHeight) {
+                backToTop.classList.add('visible');
+                resetButton.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+                if (clickState === 2) {
+                    resetButton.classList.add('visible');
+                } else {
+                    resetButton.classList.remove('visible');
+                }
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigationEnabled = false;
+            clickState = 0;
+            document.getElementById('clickHint').classList.remove('hidden');
+            document.getElementById('clickHint2').classList.remove('visible');
+            document.getElementById('quadrantLabels').classList.remove('visible');
+        });
+        
+        resetButton.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigationEnabled = false;
+            clickState = 0;
+            document.getElementById('clickHint').classList.remove('hidden');
+            document.getElementById('clickHint2').classList.remove('visible');
+            document.getElementById('quadrantLabels').classList.remove('visible');
+        });
+        
+        // Menu functionality
+        const menuButton = document.getElementById('menuButton');
+        const sideMenu = document.getElementById('sideMenu');
+        
+        menuButton.addEventListener('click', () => {
+            menuButton.classList.toggle('active');
+            sideMenu.classList.toggle('open');
+        });
+        
+        // Close menu when clicking links
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', () => {
+                menuButton.classList.remove('active');
+                sideMenu.classList.remove('open');
+            });
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            mouse.x += (target.x - mouse.x) * 0.05;
+            mouse.y += (target.y - mouse.y) * 0.05;
+
+            const positions = particles.attributes.position.array;
+            const time = Date.now() * 0.001;
+
+            const mouseInfluence = {
+                x: mouse.x * 30,
+                y: mouse.y * 30,
+                z: 0
+            };
+
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                
+                if (clickState === 1) {
+                    positions[i3] += (initialPositions[i3] - positions[i3]) * 0.2;
+                    positions[i3 + 1] += (initialPositions[i3 + 1] - positions[i3 + 1]) * 0.2;
+                    positions[i3 + 2] += (initialPositions[i3 + 2] - positions[i3 + 2]) * 0.2;
+                } else if (clickState === 2) {
+                    const particleIndex = i / particleCount;
+                    let targetX, targetY;
+                    
+                    if (particleIndex < 0.5) {
+                        targetX = (particleIndex * 2 - 0.5) * 100;
+                        targetY = 0;
+                    } else {
+                        targetX = 0;
+                        targetY = ((particleIndex - 0.5) * 2 - 0.5) * 60;
+                    }
+                    
+                    positions[i3] += (targetX - positions[i3]) * 0.1;
+                    positions[i3 + 1] += (targetY - positions[i3 + 1]) * 0.1;
+                    positions[i3 + 2] += (0 - positions[i3 + 2]) * 0.1;
+                } else {
+                    const dx = positions[i3] - mouseInfluence.x;
+                    const dy = positions[i3 + 1] - mouseInfluence.y;
+                    const dz = positions[i3 + 2] - mouseInfluence.z;
+                    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    
+                    if (distance < 15) {
+                        const force = (15 - distance) / 15;
+                        positions[i3] += (dx / distance) * force * 0.5;
+                        positions[i3 + 1] += (dy / distance) * force * 0.5;
+                        positions[i3 + 2] += (dz / distance) * force * 0.5;
+                    }
+                    
+                    positions[i3] += (initialPositions[i3] - positions[i3]) * 0.01;
+                    positions[i3 + 1] += (initialPositions[i3 + 1] - positions[i3 + 1]) * 0.01;
+                    positions[i3 + 2] += (initialPositions[i3 + 2] - positions[i3 + 2]) * 0.01;
+                    
+                    positions[i3] += velocities[i].x;
+                    positions[i3 + 1] += velocities[i].y + Math.sin(time + i * 0.01) * 0.01;
+                    positions[i3 + 2] += velocities[i].z;
+                }
+            }
+
+            particles.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
